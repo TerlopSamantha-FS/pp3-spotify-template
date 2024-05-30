@@ -1,18 +1,18 @@
 const { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } = process.env;
-const querystring = require('querystring');
 const axios = require('axios');
-const randomstring = require('randomstring');
+const { generateRandomString } = require('../utils');
 const { SpotifyToken } = require('../models');
 const qs = require('qs');
 
 const basicAuth = 'Basic ' + (Buffer.from(SPOTIFY_CLIENT_ID + ':' + SPOTIFY_CLIENT_SECRET).toString('base64'));
-const redirect_uri = 'http://localhost:3000/spotify/auth';
+const redirect_uri = 'http://localhost:3001/spotify/v1/auth';
 const now = new Date().getTime();
 
 const requestToken = (code, grant_type, token) => {
   let data = (grant_type === "refresh_token")
     ? qs.stringify({ refresh_token: code, grant_type })
     : qs.stringify({ code, grant_type, redirect_uri });
+  
   return axios({
     method: 'POST',
     url: 'https://accounts.spotify.com/api/token',
@@ -22,13 +22,13 @@ const requestToken = (code, grant_type, token) => {
       'Content-Type': 'application/x-www-form-urlencoded'
     }
   }).then(({ data }) => {
-    data.expires_in = new Date().getTime() + data.expires_in;
+    data.expires_in = new Date().getTime() + data.expires_in * 1000;
     token.update(data);
     return token.save();
   }).catch((error) => { return false; });
 };
 
-const jwt = async (req, res, next) => {
+const jwtMiddleware = async (req, res, next) => {
   req.token = await SpotifyToken.findOne({ where: {} });
   if (!req.token && !req.query.code) { return next(); }
   if (!req.token && req.query.code) {
@@ -56,14 +56,14 @@ const status = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  const state = randomstring.generate(16);
+  const state = generateRandomString(16); // Generate state token
   res.redirect('https://accounts.spotify.com/authorize?' +
-    querystring.stringify({
+    new URLSearchParams({
       response_type: 'code',
       client_id: SPOTIFY_CLIENT_ID,
       redirect_uri,
       state
-    }));
+    }).toString());
 };
 
 const search = async (req, res) => {
@@ -87,9 +87,5 @@ const search = async (req, res) => {
 };
 
 module.exports = {
-  login,
-  auth,
-  status,
-  jwt,
-  search
+  search, auth, login, status, jwtMiddleware
 };

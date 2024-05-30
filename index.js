@@ -1,9 +1,10 @@
-require('dotenv').config()
-const express = require('express')
-const app = express()
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from '../App';
 
-console.log("-------- Env Vars -------- ")
-console.log(process.env)
-console.log("-------- /Env Vars -------- ")
-
-app.listen(3001)
+ReactDOM.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  document.getElementById('root')
+);
