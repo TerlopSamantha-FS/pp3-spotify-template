@@ -1,10 +1,21 @@
 const express = require('express');
-const spotify = express.Router();
-const spotifyCtrl = require('../controllers/spotifyController');
+const router = express.Router();
+const inMemoryStorage = require('../inMemoryStorage');
 
-spotify.get('/login', spotifyCtrl.login);
-spotify.get('/auth', spotifyCtrl.jwtMiddleware, spotifyCtrl.auth);
-spotify.get('/token', spotifyCtrl.jwtMiddleware, spotifyCtrl.status);
-spotify.get('/status', spotifyCtrl.jwtMiddleware, spotifyCtrl.status);spotify.get('/search', spotifyCtrl.jwtMiddleware, spotifyCtrl.search);
+router.use((req, res, next) => {
+  const token = req.headers['authorization'];
 
-module.exports = spotify;
+  if (token && inMemoryStorage[token]) {
+    res.locals.isLoggedIn = true;
+    next();
+  } else {
+    res.locals.isLoggedIn = false;
+    next();
+  }
+});
+
+router.get('/status', (req, res) => {
+  res.json({ isLoggedIn: res.locals.isLoggedIn });
+});
+
+module.exports = router;

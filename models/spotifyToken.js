@@ -1,18 +1,18 @@
-'use strict';
-const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class SpotifyToken extends Model {
-    static associate(models) {
+  const SpotifyToken = sequelize.define('SpotifyToken', {
+    access_token: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    refresh_token: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    expires_in: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
     }
-  }
-  SpotifyToken.init({
-    access_token: DataTypes.STRING,
-    token_type: DataTypes.STRING,
-    expires_in: DataTypes.BIGINT,
-    refresh_token: DataTypes.STRING
-  }, {
-    sequelize,
-    modelName: 'SpotifyToken',
   });
+
   return SpotifyToken;
 };
